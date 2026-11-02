@@ -1,0 +1,21 @@
+{
+  "name": "writing-hooks",
+  "owner": {
+    "name": "iMerica"
+  },
+  "plugins": [
+    {
+      "name": "writing-hooks",
+      "source": "./",
+      "description": "Claude Code hooks that cut and humanize the prose Claude writes to files, and review its final replies for AI writing tells."
+    },
+    {
+      "name": "humanizer",
+      "source": {
+        "source": "github",
+        "repo": "blader/humanizer"
+      },
+      "description": "Siqi Chen's humanizer skill (MIT), which writing-hooks uses as its rulebook. Installed automatically as a dependency."
+    }
+  ]
+}

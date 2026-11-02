@@ -1,0 +1,11 @@
+{
+  "name": "writing-hooks",
+  "version": "0.1.0",
+  "description": "Claude Code hooks that cut and humanize the prose Claude writes to files, and review its final replies for AI writing tells.",
+  "author": {
+    "name": "iMerica"
+  },
+  "license": "MIT",
+  "dependencies": ["humanizer"],
+  "keywords": ["writing", "humanizer", "brevity", "hooks"]
+}
