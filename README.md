@@ -71,6 +71,20 @@ The humanizer layer sends the [blader/humanizer](https://github.com/blader/human
 
 To add a layer, write a system prompt, an `applies` check and a `valid` check, then add a `Layer` to the list.
 
+## Writing rules skill
+
+The layers clean up sentences after they are written. The `writing-rules` skill (`skills/writing-rules/SKILL.md`) works earlier, while Claude drafts Markdown or MDX: blog posts, articles, docs and READMEs. It targets what sentence-level cleanup misses, such as even rhythm, lists disguised as prose, setups that never pay off, invented anecdotes, unverified citations and sentences that exist only for SEO or a product pitch. It ends with a final check.
+
+A skill loads only when Claude judges it relevant, so the post hook also reminds Claude of the skill and its final check the first time it writes each `.md` or `.mdx` file in a session. The reminder costs no model call. `SKILL.md` files are never rewritten, because they are instructions for a model.
+
+## Voice
+
+Your voice is a setting, not part of the plugin. Point the `voice_file` option at a Markdown file that describes how you write, and Claude gets it at the start of every session and again after `/clear` or compaction. A SessionStart hook delivers it because commit messages and chat replies never pass through a file hook. With no voice file set, the hook stays silent.
+
+Set it when you enable the plugin, or later in `/config`. Outside the plugin, set the `HUMANIZER_VOICE_FILE` environment variable instead. The file stays on your machine and never ships with the plugin.
+
+A voice file works best as rules a model can check rather than adjectives. Say where the voice comes from, give each trait as an instruction with a one-line check, say how short text should scale it down and say that brevity and the anti-tells rules win any conflict. Keep it under 40 KB.
+
 ## Rules
 
 `USER_RULES` holds the hard rules, which override the skill: no em or en dashes, no curly quotes, no comma before "and" and no list ending on a bare comma. Curly quotes and commas before "and" are also fixed in code. A rewrite that contains a dash is rejected, so none of these depends on the model. `EXTRA_PATTERNS` adds two patterns to the skill's numbering: scripted relatability (27) and decorative specificity (28). Edit both to match your own style.
@@ -94,6 +108,8 @@ Environment variables, all optional:
 | `HUMANIZER_STATE_DIR` | `~/.claude/state/humanizer` | Seen-text cache and error log |
 
 Each piece of text gets one pass. Errors go to `errors.log` in the state directory.
+
+The hooks call the `claude` CLI, so they use whatever provider your Claude Code is set up for. If that is Amazon Bedrock, Google Vertex AI or a gateway, set the three model variables to the model IDs your setup accepts.
 
 ## Tests
 

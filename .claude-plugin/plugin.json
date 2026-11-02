@@ -1,11 +1,26 @@
 {
   "name": "writing-hooks",
-  "version": "0.1.0",
-  "description": "Claude Code hooks that cut and humanize the prose Claude writes to files, and review its final replies for AI writing tells.",
+  "version": "0.4.0",
+  "description": "Claude Code hooks that cut and humanize the prose Claude writes and review its final replies for AI writing tells, plus a writing-rules skill and an optional voice file of your own.",
   "author": {
     "name": "iMerica"
   },
   "license": "MIT",
-  "dependencies": ["humanizer"],
-  "keywords": ["writing", "humanizer", "brevity", "hooks"]
+  "dependencies": [
+    "humanizer"
+  ],
+  "keywords": [
+    "writing",
+    "humanizer",
+    "brevity",
+    "hooks"
+  ],
+  "userConfig": {
+    "voice_file": {
+      "type": "file",
+      "title": "Voice file",
+      "description": "Optional. A Markdown file that describes how you write. Claude gets it at the start of every session and writes in that voice.",
+      "required": false
+    }
+  }
 }

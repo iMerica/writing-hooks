@@ -7,7 +7,7 @@
     {
       "name": "writing-hooks",
       "source": "./",
-      "description": "Claude Code hooks that cut and humanize the prose Claude writes to files, and review its final replies for AI writing tells."
+      "description": "Claude Code hooks that cut and humanize the prose Claude writes and review its final replies for AI writing tells, plus a writing-rules skill and an optional voice file of your own."
     },
     {
       "name": "humanizer",

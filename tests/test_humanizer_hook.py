@@ -581,7 +581,7 @@ class WritingRulesReminder(HookTest):
     def test_once_per_markdown_file_per_session(self):
         path = self.write("post.mdx", "The cache keeps results for ten minutes and then drops them.\n")
         first = self.post(path)
-        self.assertIn("writing-rules skill", first["hookSpecificOutput"]["additionalContext"])
+        self.assertIn("writing-rules", first["hookSpecificOutput"]["additionalContext"])
         self.assertIn("final check", first["hookSpecificOutput"]["additionalContext"])
         self.assertIsNone(self.post(path))
         self.assertIsNotNone(self.post(path, session="s2"))
@@ -593,6 +593,23 @@ class WritingRulesReminder(HookTest):
         self.assertIsNone(self.post(path))
         path = self.write("notes.txt", "Plain text is prose but not Markdown, so it gets no reminder.\n")
         self.assertIsNone(self.post(path))
+
+    def test_session_start_hands_over_the_voice_file(self):
+        voice = self.write("voice.md", "State a thesis someone could dispute.\n")
+        out = self.run_hook("session", {"hook_event_name": "SessionStart", "source": "startup"},
+                            CLAUDE_PLUGIN_OPTION_VOICE_FILE=voice)
+        ctx = out["hookSpecificOutput"]["additionalContext"]
+        self.assertEqual(out["hookSpecificOutput"]["hookEventName"], "SessionStart")
+        self.assertIn("State a thesis someone could dispute.", ctx)
+        self.assertIn("commit messages", ctx)
+        self.assertEqual(self.calls(), [])  # no model call
+
+    def test_session_start_without_a_voice_says_nothing(self):
+        self.assertIsNone(self.run_hook("session", {"hook_event_name": "SessionStart"}))
+        missing = os.path.join(self.tmp, "nope.md")
+        self.assertIsNone(self.run_hook("session", {}, HUMANIZER_VOICE_FILE=missing))
+        big = self.write("big.md", "x" * (hh.VOICE_MAX_BYTES + 1))
+        self.assertIsNone(self.run_hook("session", {}, HUMANIZER_VOICE_FILE=big))
 
     def test_skill_files_are_left_alone(self):
         text = "---\nname: rules\n---\n\nLet's dive into caching. Here's what you need to know.\n"

@@ -5,6 +5,8 @@
                            through LAYERS in order (brevity on multi-paragraph writing, then humanizer),
                            and points Claude at the writing-rules skill once per Markdown file per session.
   humanizer_hook.py stop   Stop: asks Claude to revise a final response that shows AI writing tells.
+  humanizer_hook.py session SessionStart: hands Claude the user's voice file, when one is configured, which
+                            reaches commit messages and chat text that no file hook sees.
 
 The stylistic rules come from the installed blader/humanizer SKILL.md, which is sent verbatim as
 the system prompt of a headless `claude -p` call. This file only decides what counts as prose,
@@ -1284,7 +1286,7 @@ def process_file(payload):
 # reliable: the first time Claude writes a given Markdown or MDX file in a session, the hook points
 # it at the skill and its final check. No model call; one reminder per file per session.
 
-RULES_REMINDER = """This is a Markdown or MDX file, so the writing-rules skill applies to its prose. Load the writing-rules skill if it is not already loaded and follow it. Before you finish with this file, run its final check:
+RULES_REMINDER = """This is a Markdown or MDX file, so the writing-rules skill applies to its prose. Load it if it is not already loaded and follow it, together with any voice you were given at session start. Before you finish with this file, run the writing-rules final check:
 - No run of more than three similar-length sentences
 - No more than one paragraph in three ends on a punchline
 - Every setup in the intro is paid off
@@ -1314,6 +1316,41 @@ def rules_reminder(payload):
     seen.add(key)
     seen.save()
     return {"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": RULES_REMINDER}}
+
+
+VOICE_MAX_BYTES = 40_000
+
+VOICE_PREAMBLE = """Write all prose for this user in the voice described below. That covers anything a person will read: Markdown, MDX and other doc files, READMEs, interface copy, git commit messages, pull request descriptions and text the user asks for. Scale the voice to the length of the text; short text uses only the rules that fit. Brevity, the writing rules and the anti-tells rules win any conflict with the voice. For Markdown and MDX, also load the writing-rules skill.
+
+<voice>
+%s
+</voice>"""
+
+
+def voice_file():
+    """The user's voice file: the plugin's voice_file option, or HUMANIZER_VOICE_FILE outside a plugin."""
+    raw = os.environ.get("CLAUDE_PLUGIN_OPTION_VOICE_FILE") or os.environ.get("HUMANIZER_VOICE_FILE")
+    if not raw:
+        return None
+    path = os.path.expanduser(raw.strip())
+    if not os.path.isfile(path) or os.path.getsize(path) > VOICE_MAX_BYTES:
+        return None
+    return path
+
+
+def session_start(payload):
+    """SessionStart: hands Claude the user's voice, which reaches commit messages and chat text no file hook sees.
+
+    No voice configured means no output. The voice lives outside the plugin, so nobody's voice ships with it.
+    """
+    path = voice_file()
+    if not path:
+        return None
+    with open(path, encoding="utf-8") as f:
+        voice = f.read().strip()
+    if not voice:
+        return None
+    return {"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": VOICE_PREAMBLE % voice}}
 
 
 def post(payload):
@@ -1408,7 +1445,8 @@ def main(argv):
     mode = argv[1] if len(argv) > 1 else ""
     try:
         payload = json.loads(sys.stdin.read() or "{}")
-        result = post(payload) if mode == "post" else review_response(payload) if mode == "stop" else None
+        handlers = {"post": post, "stop": review_response, "session": session_start}
+        result = handlers[mode](payload) if mode in handlers else None
         if result:
             sys.stdout.write(json.dumps(result))
     except BaseException as exc:  # fail open, always

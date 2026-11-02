@@ -9,6 +9,8 @@ These rules are for you, the model writing Markdown or MDX prose: blog posts, ar
 
 Rules 11 and 14 apply to blog posts and articles. Every other rule applies to all Markdown and MDX prose.
 
+If you were given a voice at session start, write in it as well. These rules win any conflict with it.
+
 ## Rhythm
 
 1. Vary sentence length deliberately. In any paragraph of four or more sentences, include at least one sentence over 25 words and one under 8. Never write more than three consecutive sentences of similar length.
